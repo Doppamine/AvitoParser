@@ -89,3 +89,39 @@ def test_inactive_competitors_are_hidden_by_default(client, apartment, competito
 
 def test_missing_apartment_gives_404(client, db):
     assert client.get(reverse('apartment-detail', args=[999])).status_code == 404
+
+
+def test_index_counts_only_active_competitors(client, apartment, competitor):
+    Competitor.objects.create(
+        apartment=apartment, url='https://avito.ru/old', title='снят', is_active=False
+    )
+
+    response = client.get(reverse('apartment-list'))
+
+    assert response.context['apartments'][0].active_competitors == 1
+
+
+def test_index_shows_the_last_successful_collection(client, apartment, competitor, today, make_snapshot):
+    make_snapshot(competitor, today, hours_ago=30)
+    fresh = make_snapshot(competitor, today, hours_ago=2)
+    make_snapshot(competitor, today, price=None, status=SnapshotStatus.FAILED, hours_ago=1)
+
+    response = client.get(reverse('apartment-list'))
+
+    assert response.context['apartments'][0].last_success == fresh.collected_at
+
+
+def test_index_ignores_listing_prices_as_a_sign_of_success(client, apartment, competitor, make_snapshot):
+    """Одна витринная цена не значит, что цены на даты собраны."""
+    make_snapshot(competitor, price_kind=PriceKind.LISTING, check_in=None, nights=None)
+
+    response = client.get(reverse('apartment-list'))
+
+    assert response.context['apartments'][0].last_success is None
+
+
+def test_index_survives_an_apartment_without_data(client, apartment):
+    response = client.get(reverse('apartment-list'))
+
+    assert response.context['apartments'][0].active_competitors == 0
+    assert response.context['apartments'][0].last_success is None

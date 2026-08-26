@@ -2,14 +2,40 @@
 {% block title %}Квартиры{% endblock %}
 {% block content %}
 <h1 class="h5 mb-3">Квартиры</h1>
-<ul class="list-unstyled">
-  {% for apartment in apartments %}
-    <li class="mb-1">
-      <a href="{% url 'apartment-detail' apartment.pk %}">{{ apartment.title }}</a>
-      <span class="text-muted">{{ apartment.address }}</span>
-    </li>
-  {% empty %}
-    <li class="text-muted">Квартиры не заведены. Добавьте их в <a href="/admin/">админке</a>.</li>
-  {% endfor %}
-</ul>
+
+<div class="table-responsive">
+<table class="table table-sm table-bordered align-middle" style="max-width: 60rem">
+  <thead>
+    <tr>
+      <th>Квартира</th>
+      <th>Адрес</th>
+      <th class="text-end">Конкурентов</th>
+      <th>Последний успешный сбор</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for apartment in apartments %}
+      <tr>
+        <td><a href="{% url 'apartment-detail' apartment.pk %}">{{ apartment.title }}</a></td>
+        <td class="text-muted">{{ apartment.address|default:"—" }}</td>
+        <td class="text-end">{{ apartment.active_competitors }}</td>
+        <td>
+          {% if apartment.last_success %}
+            {{ apartment.last_success|date:"d.m.Y H:i" }}
+            <span class="text-muted">({{ apartment.last_success|timesince }} назад)</span>
+          {% else %}
+            <span class="text-muted" title="Ни одного успешного снимка">—</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="4" class="text-muted">
+          Квартиры не заведены. Добавьте их в <a href="{% url 'admin:monitor_apartment_changelist' %}">админке</a>.
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
 {% endblock %}

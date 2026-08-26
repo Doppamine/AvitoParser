@@ -8,6 +8,22 @@
     {% endif %}
     {% if not row.is_active %}<span class="badge text-bg-secondary">не в работе</span>{% endif %}
     {% if row.min_nights %}<span class="note">минимум {{ row.min_nights_label }}</span>{% endif %}
+    {% if not row.is_ours %}
+      {% if row.is_active %}
+        <form method="post" action="{% url 'competitor-retire' apartment.pk row.pk %}" class="d-inline float-end"
+              onsubmit="return confirm('Убрать объявление из работы? Собранные цены сохранятся.');">
+          {% csrf_token %}
+          <input type="hidden" name="back" value="{{ request.GET.urlencode }}">
+          <button type="submit" class="btn btn-link btn-sm p-0 text-secondary" title="Убрать из работы">✕</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'competitor-restore' apartment.pk row.pk %}" class="d-inline float-end">
+          {% csrf_token %}
+          <input type="hidden" name="back" value="{{ request.GET.urlencode }}">
+          <button type="submit" class="btn btn-link btn-sm p-0" title="Вернуть в работу">вернуть</button>
+        </form>
+      {% endif %}
+    {% endif %}
   </td>
   {% for cell in row.cells %}
     <td class="text-end {% if cell.is_cheaper %}cheaper{% endif %}">

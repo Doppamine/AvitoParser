@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+from django.contrib.messages import constants as message_constants
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -128,6 +130,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+# Bootstrap называет этот класс danger, а Django — error.
+MESSAGE_TAGS = {message_constants.ERROR: 'danger'}
 
 # Менеджер вставляет ссылки на объявления руками; ссылка без схемы должна стать
 # https, а не http. В Django 6 это поведение станет умолчанием.

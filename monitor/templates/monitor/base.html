@@ -23,6 +23,13 @@
   </style>
 </head>
 <body class="p-3">
+{% if messages %}
+  <div class="mb-2">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.level_tag }} py-1 px-2 mb-1">{{ message }}</div>
+    {% endfor %}
+  </div>
+{% endif %}
 {% block content %}{% endblock %}
 </body>
 </html>

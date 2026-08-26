@@ -3,6 +3,8 @@
 from django.db import models
 from django.db.models import Q
 
+from monitor.validators import validate_avito_url
+
 
 class SnapshotIsImmutable(Exception):
     """Попытка изменить или удалить уже записанный снимок цены."""
@@ -13,7 +15,9 @@ class Apartment(models.Model):
 
     title = models.CharField('название', max_length=200)
     address = models.CharField('адрес', max_length=300, blank=True)
-    avito_url = models.URLField('объявление на Avito', max_length=500, blank=True)
+    avito_url = models.URLField(
+        'объявление на Avito', max_length=500, blank=True, validators=[validate_avito_url]
+    )
     realtycalendar_id = models.CharField(
         'идентификатор в RealtyCalendar', max_length=100, blank=True
     )
@@ -22,7 +26,9 @@ class Apartment(models.Model):
     created_at = models.DateTimeField('заведена', auto_now_add=True)
 
     class Meta:
-        verbose_name = 'квартира'
+        # Админка подставляет verbose_name в «Выберите … для изменения» и «Добавить …»,
+        # поэтому здесь винительный падеж, а не именительный.
+        verbose_name = 'квартиру'
         verbose_name_plural = 'квартиры'
         ordering = ['title']
 
@@ -43,7 +49,9 @@ class Competitor(models.Model):
         related_name='competitors',
         verbose_name='квартира',
     )
-    url = models.URLField('ссылка на объявление', max_length=500)
+    url = models.URLField(
+        'ссылка на объявление', max_length=500, validators=[validate_avito_url]
+    )
     # Заголовок и минимальный срок заполнит парсер. Минимального срока на страницах
     # Avito нет вовсе (разведка фазы 0), поэтому поле может остаться пустым навсегда.
     title = models.CharField('заголовок', max_length=300, blank=True)
@@ -54,7 +62,7 @@ class Competitor(models.Model):
     created_at = models.DateTimeField('заведён', auto_now_add=True)
 
     class Meta:
-        verbose_name = 'конкурент'
+        verbose_name = 'конкурента'
         verbose_name_plural = 'конкуренты'
         ordering = ['title', 'url']
         constraints = [

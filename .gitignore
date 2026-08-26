@@ -7,4 +7,5 @@ __pycache__/
 *.pyc
 db.sqlite3
 .pytest_cache/
+.idea/
 *:Zone.Identifier

@@ -1,12 +1,24 @@
 """Штатная админка: справочники ведёт менеджер, снимки только для чтения."""
 
 from django.contrib import admin
+from django.contrib.auth.models import Group, User
 
 from monitor.models import Apartment, Competitor, PriceSnapshot
+
+admin.site.site_header = 'Цены на посуточную аренду'
+admin.site.site_title = 'Цены на посуточную аренду'
+admin.site.index_title = 'Справочники и снимки цен'
+
+# Пользователей в проекте двое, заводятся они из командной строки, а ролей и прав
+# по постановке не будет вовсе. В списке эти разделы только мешают.
+admin.site.unregister(Group)
+admin.site.unregister(User)
 
 
 class CompetitorInline(admin.TabularInline):
     model = Competitor
+    verbose_name = 'конкурента'
+    verbose_name_plural = 'конкуренты'
     extra = 1
     fields = ('url', 'title', 'min_nights', 'is_active')
     # Удаление конкурента запрещено: снимки на него ссылаются с PROTECT,

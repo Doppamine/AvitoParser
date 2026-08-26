@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError
 from django.utils import timezone
@@ -165,3 +166,29 @@ def test_competitor_url_is_unique_per_apartment(apartment, competitor):
 
     other = Apartment.objects.create(title='Другая квартира')
     assert Competitor.objects.create(apartment=other, url=competitor.url).pk
+
+
+@pytest.mark.parametrize(
+    'url',
+    [
+        'https://www.avito.ru/moskva/kvartiry/1',
+        'https://avito.ru/moskva/kvartiry/1',
+        'https://m.avito.ru/moskva/kvartiry/1',
+    ],
+)
+def test_avito_urls_pass_validation(apartment, url):
+    Competitor(apartment=apartment, url=url).full_clean()
+
+
+@pytest.mark.parametrize(
+    'url',
+    [
+        'https://www.cian.ru/rent/flat/1/',
+        'https://avito.ru.evil.example/moskva/1',
+        'ftp://avito.ru/1',
+    ],
+)
+def test_foreign_urls_fail_validation(apartment, url):
+    """Одна и та же проверка работает и на странице квартиры, и в админке."""
+    with pytest.raises(ValidationError):
+        Competitor(apartment=apartment, url=url).full_clean()

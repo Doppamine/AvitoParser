@@ -78,6 +78,7 @@ class Row:
     min_nights: int | None
     is_active: bool
     is_ours: bool
+    pk: int | None = None
     cells: list[Cell] = field(default_factory=list)
 
     @property
@@ -150,6 +151,7 @@ def latest_prices(apartment, dates):
             min_nights=min_nights,
             is_active=is_active,
             is_ours=is_ours,
+            pk=competitor_id or apartment_id,
         )
         for check_in in dates:
             key = (competitor_id, apartment_id, check_in)

@@ -8,8 +8,7 @@
     <span class="text-muted">{{ apartment.address }}</span>
   </div>
   <div class="text-muted">
-    <a href="{% url 'apartment-list' %}">все квартиры</a> ·
-    <a href="/admin/monitor/competitor/?apartment__id__exact={{ apartment.pk }}">править список конкурентов</a>
+    <a href="{% url 'apartment-list' %}">все квартиры</a>
   </div>
 </div>
 
@@ -27,6 +26,19 @@
     {% endif %}
   {% endif %}
 </div>
+
+<form method="post" action="{% url 'competitor-add' apartment.pk %}" class="row g-2 mb-3">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.GET.urlencode }}">
+  <div class="col-12 col-md-6 col-lg-5">
+    <input type="text" name="url" class="form-control form-control-sm"
+           placeholder="https://www.avito.ru/moskva/kvartiry/..." required
+           aria-label="Ссылка на объявление конкурента">
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-primary">Добавить конкурента</button>
+  </div>
+</form>
 
 <div class="table-responsive">
 <table class="table table-sm table-bordered prices align-middle">
