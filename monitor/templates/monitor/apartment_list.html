@@ -1,0 +1,15 @@
+{% extends "monitor/base.html" %}
+{% block title %}Квартиры{% endblock %}
+{% block content %}
+<h1 class="h5 mb-3">Квартиры</h1>
+<ul class="list-unstyled">
+  {% for apartment in apartments %}
+    <li class="mb-1">
+      <a href="{% url 'apartment-detail' apartment.pk %}">{{ apartment.title }}</a>
+      <span class="text-muted">{{ apartment.address }}</span>
+    </li>
+  {% empty %}
+    <li class="text-muted">Квартиры не заведены. Добавьте их в <a href="/admin/">админке</a>.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

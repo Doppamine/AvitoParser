@@ -1,0 +1,13 @@
+# Ссылки на объявления конкурентов, по одной на строку. Строки с # игнорируются.
+# Целевой адрес: Москва, Окружной пр., 10Б.
+#
+# Полезно, чтобы среди пяти были разные типы объявлений — иначе вопрос 5
+# (одинаково ли устроены страницы) останется без ответа:
+#   частник, ещё частник, агентство, Авито Путешествия, любое пятое.
+#
+# Вставьте ссылки ниже и удалите эту строку-заглушку.
+https://www.avito.ru/moskva/kvartiry/kvartira-studiya_v_apart-otele_24_m_1_krovat_7628611904?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJ4WWZtUlp4WnVRRUZ1Ums2Ijt9Rg8PLz8AAAA
+https://www.avito.ru/moskva/kvartiry/kvartira-studiya_30_m_3_krovati_4727479076?context=H4sIAAAAAAAA_wEfAOD_YToxOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7fQseF2QfAAAA
+https://www.avito.ru/moskva/kvartiry/kvartira-studiya_25_m_2_krovati_4875762986?context=H4sIAAAAAAAA_wEfAOD_YToxOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7fQseF2QfAAAA
+https://www.avito.ru/moskva/kvartiry/kvartira-studiya_25_m_2_krovati_4431710759?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJ2ejdTUkl5N2pHcUlvZ1Y1Ijt9Q5F_AD8AAAA
+avito.ru/moskva/kvartiry/kvartira-studiya_19_m_1_krovat_7251781371?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJOczJDYktKTzJaRXE0MmNtIjt9LcOfTD8AAAA

@@ -1,0 +1,27 @@
+<tr class="{% if row.is_ours %}ours{% endif %}{% if not row.is_active %} inactive{% endif %}">
+  <td class="name">
+    {% if row.is_ours %}<span class="badge text-bg-primary">наша</span> {% endif %}
+    {% if row.url %}
+      <a href="{{ row.url }}" target="_blank" rel="noopener">{{ row.title }}</a>
+    {% else %}
+      {{ row.title }}
+    {% endif %}
+    {% if not row.is_active %}<span class="badge text-bg-secondary">не в работе</span>{% endif %}
+    {% if row.min_nights %}<span class="note">минимум {{ row.min_nights_label }}</span>{% endif %}
+  </td>
+  {% for cell in row.cells %}
+    <td class="text-end {% if cell.is_cheaper %}cheaper{% endif %}">
+      {% if cell.has_price %}
+        <span class="price">{{ cell.price_display }}</span>
+        {% if cell.is_averaged %}
+          <span class="note" title="Цена получена делением суммы за диапазон на число ночей. Выходные внутри диапазона дороже, поэтому это среднее, а не цена именно этой ночи.">ср. за {{ cell.nights_label }}</span>
+        {% endif %}
+        {% if cell.is_stale %}
+          <span class="note" title="Собрано {{ cell.collected_at }}">{{ cell.collected_at|timesince }} назад</span>
+        {% endif %}
+      {% else %}
+        <span class="dash" title="{{ cell.miss_reason }}">—</span>
+      {% endif %}
+    </td>
+  {% endfor %}
+</tr>

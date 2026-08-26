@@ -1,0 +1,66 @@
+{% extends "monitor/base.html" %}
+{% block title %}{{ apartment.title }} — цены{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-baseline mb-2">
+  <div>
+    <h1 class="h5 mb-0">{{ apartment.title }}</h1>
+    <span class="text-muted">{{ apartment.address }}</span>
+  </div>
+  <div class="text-muted">
+    <a href="{% url 'apartment-list' %}">все квартиры</a> ·
+    <a href="/admin/monitor/competitor/?apartment__id__exact={{ apartment.pk }}">править список конкурентов</a>
+  </div>
+</div>
+
+<div class="mb-2 text-muted">
+  Цена за ночь. Витринная цена «от N ₽» в таблицу не попадает: она не совпадает с ценой на даты.
+  {% if sort_date %}
+    Сортировка по {{ sort_date|date:"d.m" }} —
+    <a href="?{% if show_inactive %}show_inactive=1{% endif %}">сбросить</a>.
+  {% endif %}
+  {% if inactive_count %}
+    {% if show_inactive %}
+      <a href="?{% if sort_date %}sort={{ sort_date|date:'Y-m-d' }}{% endif %}">скрыть неактивных ({{ inactive_count }})</a>
+    {% else %}
+      <a href="?show_inactive=1{% if sort_date %}&amp;sort={{ sort_date|date:'Y-m-d' }}{% endif %}">показать неактивных ({{ inactive_count }})</a>
+    {% endif %}
+  {% endif %}
+</div>
+
+<div class="table-responsive">
+<table class="table table-sm table-bordered prices align-middle">
+  <thead>
+    <tr>
+      <th class="name">Объявление</th>
+      {% for day in table.dates %}
+        {% with weekday=day|date:"w" %}
+        <th class="text-end {% if weekday == '0' or weekday == '6' %}weekend{% endif %}">
+          <a href="?sort={{ day|date:'Y-m-d' }}{% if show_inactive %}&amp;show_inactive=1{% endif %}"
+             class="text-decoration-none {% if sort_date == day %}fw-bold{% else %}text-body{% endif %}"
+             title="Отсортировать по цене на эту дату">
+            {{ day|date:"D" }}<br>{{ day|date:"d.m" }}
+          </a>
+        </th>
+        {% endwith %}
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% include "monitor/_price_row.html" with row=table.ours %}
+    {% for row in rows %}
+      {% include "monitor/_price_row.html" with row=row %}
+    {% empty %}
+      <tr><td class="text-muted" colspan="{{ table.dates|length|add:1 }}">Конкуренты не заведены.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<p class="text-muted mt-2 mb-0">
+  Подсвечены конкуренты, которые на эту дату дешевле нас. Прочерк — цены нет; причина во всплывающей подсказке.
+  «ср. за N ночей» значит, что цена получена делением суммы за диапазон: выходные внутри диапазона дороже,
+  поэтому это среднее, а не цена именно этой ночи.
+</p>
+
+{% endblock %}
