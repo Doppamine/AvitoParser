@@ -125,14 +125,22 @@ def test_get_requests_change_nothing(client, apartment, competitor):
     assert [client.get(url).status_code for url in urls] == [405, 405, 405]
 
 
-def test_view_settings_survive_a_change(client, apartment, competitor, today):
-    """После добавления менеджер возвращается к той же сортировке и тому же виду."""
-    response = add(client, apartment, VALID_URL, back=f'sort={today.isoformat()}&show_inactive=1')
+def test_the_period_survives_a_change(client, apartment, competitor, today):
+    """После добавления менеджер возвращается к тому же периоду и той же сортировке."""
+    from datetime import timedelta
 
-    assert response.redirect_chain[-1][0].endswith(
-        f'?sort={today.isoformat()}&show_inactive=1'
+    from monitor.services import Interval
+
+    far = Interval(check_in=today + timedelta(days=24), nights=3)
+    back = (
+        f'from={far.check_in.isoformat()}&to={far.check_out.isoformat()}'
+        '&sort=price&show_inactive=1'
     )
-    assert response.context['sort_date'] == today
+
+    response = add(client, apartment, VALID_URL, back=back)
+
+    assert response.context['interval'] == far
+    assert response.context['sort_by'] == 'price'
     assert response.context['show_inactive']
 
 

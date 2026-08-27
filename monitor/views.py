@@ -1,7 +1,5 @@
 """Страница сравнения цен. Решения о ценах принимает человек: страница только показывает."""
 
-from datetime import date
-
 from django.contrib import messages
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import QueryDict
@@ -11,10 +9,11 @@ from django.views.decorators.http import require_POST
 
 from monitor.forms import CompetitorAddForm
 from monitor.models import Apartment, Competitor, PriceKind, PriceSnapshot, SnapshotStatus
-from monitor.services import horizon_dates, latest_prices, sort_rows
+from monitor.services import latest_prices, parse_interval, sort_rows
 
-# Параметры вида таблицы, которые надо сохранить после добавления или удаления.
-VIEW_PARAMS = ('sort', 'show_inactive')
+# Параметры вида, которые надо сохранить после добавления или удаления конкурента:
+# менеджер должна вернуться к тому же периоду и той же сортировке.
+VIEW_PARAMS = ('from', 'to', 'sort', 'show_inactive')
 
 
 def apartment_list(request):
@@ -37,29 +36,58 @@ def apartment_list(request):
 
 def apartment_detail(request, pk):
     apartment = get_object_or_404(Apartment, pk=pk)
-    dates = horizon_dates()
-    table = latest_prices(apartment, dates)
 
-    sort_date = _parse_sort_date(request.GET.get('sort'), dates)
+    interval, error = parse_interval(request.GET.get('from'), request.GET.get('to'))
+    if error:
+        messages.warning(request, error)
+
+    table = latest_prices(apartment, interval)
+
+    sort_by = 'price' if request.GET.get('sort') == 'price' else 'title'
     show_inactive = request.GET.get('show_inactive') == '1'
 
     rows = table.active_competitors
     if show_inactive:
         rows = rows + table.inactive_competitors
-    rows = sort_rows(rows, sort_date)
+    rows = sort_rows(rows, sort_by)
 
+    sort_param = 'price' if sort_by == 'price' else None
     return render(
         request,
         'monitor/apartment_detail.html',
         {
             'apartment': apartment,
             'table': table,
+            'interval': interval,
             'rows': rows,
-            'sort_date': sort_date,
+            'sort_by': sort_by,
             'show_inactive': show_inactive,
             'inactive_count': len(table.inactive_competitors),
+            'links': {
+                'by_title': _view_url(apartment, interval, show_inactive=show_inactive),
+                'by_price': _view_url(
+                    apartment, interval, sort='price', show_inactive=show_inactive
+                ),
+                'with_inactive': _view_url(
+                    apartment, interval, sort=sort_param, show_inactive=True
+                ),
+                'without_inactive': _view_url(apartment, interval, sort=sort_param),
+            },
         },
     )
+
+
+def _view_url(apartment, interval, *, sort=None, show_inactive=False):
+    """Адрес страницы с этим же периодом: такую ссылку можно переслать."""
+    params = QueryDict(mutable=True)
+    params['from'] = interval.check_in.isoformat()
+    params['to'] = interval.check_out.isoformat()
+    if sort:
+        params['sort'] = sort
+    if show_inactive:
+        params['show_inactive'] = '1'
+    path = reverse('apartment-detail', args=[apartment.pk])
+    return f'{path}?{params.urlencode()}'
 
 
 @require_POST
@@ -98,17 +126,6 @@ def competitor_restore(request, pk, competitor_pk):
     competitor.save(update_fields=['is_active'])
     messages.success(request, f'{competitor} снова в работе.')
     return redirect(_back_url(request, apartment))
-
-
-def _parse_sort_date(value, dates):
-    """Сортировать можно только по колонке, которая есть на экране."""
-    if not value:
-        return None
-    try:
-        parsed = date.fromisoformat(value)
-    except ValueError:
-        return None
-    return parsed if parsed in dates else None
 
 
 def _back_url(request, apartment):

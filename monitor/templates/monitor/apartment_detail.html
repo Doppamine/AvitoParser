@@ -12,20 +12,31 @@
   </div>
 </div>
 
-<div class="mb-2 text-muted">
-  Цена за ночь. Витринная цена «от N ₽» в таблицу не попадает: она не совпадает с ценой на даты.
-  {% if sort_date %}
-    Сортировка по {{ sort_date|date:"d.m" }} —
-    <a href="?{% if show_inactive %}show_inactive=1{% endif %}">сбросить</a>.
-  {% endif %}
-  {% if inactive_count %}
-    {% if show_inactive %}
-      <a href="?{% if sort_date %}sort={{ sort_date|date:'Y-m-d' }}{% endif %}">скрыть неактивных ({{ inactive_count }})</a>
-    {% else %}
-      <a href="?show_inactive=1{% if sort_date %}&amp;sort={{ sort_date|date:'Y-m-d' }}{% endif %}">показать неактивных ({{ inactive_count }})</a>
-    {% endif %}
-  {% endif %}
-</div>
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-auto">
+    <label class="form-label mb-0 small text-muted" for="from">Заезд</label>
+    <input type="date" id="from" name="from" value="{{ interval.check_in|date:'Y-m-d' }}"
+           class="form-control form-control-sm">
+  </div>
+  <div class="col-auto">
+    <label class="form-label mb-0 small text-muted" for="to">Выезд</label>
+    <input type="date" id="to" name="to" value="{{ interval.check_out|date:'Y-m-d' }}"
+           class="form-control form-control-sm">
+  </div>
+  {% if sort_by == 'price' %}<input type="hidden" name="sort" value="price">{% endif %}
+  {% if show_inactive %}<input type="hidden" name="show_inactive" value="1">{% endif %}
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-primary">Показать</button>
+  </div>
+  <div class="col-auto text-muted">{{ interval.nights_label }}</div>
+  <div class="col-auto ms-auto">
+    {# Место под кнопку живого обновления. Она появится в фазе 3, вместе со сбором. #}
+    <button type="button" class="btn btn-sm btn-outline-secondary" disabled
+            title="Появится в фазе 3, когда будет сбор цен. Сейчас страница показывает то, что собрано раньше.">
+      Обновить цены
+    </button>
+  </div>
+</form>
 
 <form method="post" action="{% url 'competitor-add' apartment.pk %}" class="row g-2 mb-3">
   {% csrf_token %}
@@ -40,22 +51,39 @@
   </div>
 </form>
 
+<div class="mb-2 text-muted">
+  Период {{ interval }}. Витринная цена «от N ₽» в таблицу не попадает: она не совпадает с ценой на даты.
+  {% if inactive_count %}
+    {% if show_inactive %}
+      <a href="{{ links.without_inactive }}">скрыть неактивных ({{ inactive_count }})</a>
+    {% else %}
+      <a href="{{ links.with_inactive }}">показать неактивных ({{ inactive_count }})</a>
+    {% endif %}
+  {% endif %}
+</div>
+
 <div class="table-responsive">
 <table class="table table-sm table-bordered prices align-middle">
   <thead>
     <tr>
-      <th class="name">Объявление</th>
-      {% for day in table.dates %}
-        {% with weekday=day|date:"w" %}
-        <th class="text-end {% if weekday == '0' or weekday == '6' %}weekend{% endif %}">
-          <a href="?sort={{ day|date:'Y-m-d' }}{% if show_inactive %}&amp;show_inactive=1{% endif %}"
-             class="text-decoration-none {% if sort_date == day %}fw-bold{% else %}text-body{% endif %}"
-             title="Отсортировать по цене на эту дату">
-            {{ day|date:"D" }}<br>{{ day|date:"d.m" }}
-          </a>
-        </th>
-        {% endwith %}
-      {% endfor %}
+      <th class="name">
+        Объявление
+        {% if sort_by == 'price' %}
+          <a href="{{ links.by_title }}" class="fw-normal text-body-secondary">по названию</a>
+        {% else %}
+          <span class="fw-bold">по названию</span>
+        {% endif %}
+      </th>
+      <th class="text-end" title="Сумма за период, делённая на число ночей. Выходные внутри периода дороже будней, поэтому это средняя цена ночи.">
+        Цена за ночь
+        {% if sort_by == 'price' %}
+          <span class="note">по цене ↑</span>
+        {% else %}
+          <a href="{{ links.by_price }}" class="note">сортировать по цене</a>
+        {% endif %}
+      </th>
+      <th class="text-end">Сумма за период</th>
+      <th class="text-end">Собрано</th>
     </tr>
   </thead>
   <tbody>
@@ -63,16 +91,16 @@
     {% for row in rows %}
       {% include "monitor/_price_row.html" with row=row %}
     {% empty %}
-      <tr><td class="text-muted" colspan="{{ table.dates|length|add:1 }}">Конкуренты не заведены.</td></tr>
+      <tr><td class="text-muted" colspan="4">Конкуренты не заведены.</td></tr>
     {% endfor %}
   </tbody>
 </table>
 </div>
 
 <p class="text-muted mt-2 mb-0">
-  Подсвечены конкуренты, которые на эту дату дешевле нас. Прочерк — цены нет; причина во всплывающей подсказке.
-  «ср. за N ночей» значит, что цена получена делением суммы за диапазон: выходные внутри диапазона дороже,
-  поэтому это среднее, а не цена именно этой ночи.
+  Подсвечены конкуренты, которые на этот период дешевле нас. Прочерк — цены на этот период нет;
+  причина во всплывающей подсказке. Цена за две ночи не подставляется вместо цены за три:
+  это разные числа.
 </p>
 
 {% endblock %}

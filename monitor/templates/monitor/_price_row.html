@@ -25,19 +25,30 @@
       {% endif %}
     {% endif %}
   </td>
-  {% for cell in row.cells %}
-    <td class="text-end {% if cell.is_cheaper %}cheaper{% endif %}">
-      {% if cell.has_price %}
-        <span class="price">{{ cell.price_display }}</span>
-        {% if cell.is_averaged %}
-          <span class="note" title="Цена получена делением суммы за диапазон на число ночей. Выходные внутри диапазона дороже, поэтому это среднее, а не цена именно этой ночи.">ср. за {{ cell.nights_label }}</span>
-        {% endif %}
-        {% if cell.is_stale %}
-          <span class="note" title="Собрано {{ cell.collected_at }}">{{ cell.collected_at|timesince }} назад</span>
-        {% endif %}
-      {% else %}
-        <span class="dash" title="{{ cell.miss_reason }}">—</span>
-      {% endif %}
-    </td>
-  {% endfor %}
+
+  {% with cell=row.cell %}
+  <td class="text-end {% if cell.is_cheaper %}cheaper{% endif %}">
+    {% if cell.has_price %}
+      <span class="price fs-6">{{ cell.price_display }}</span>
+    {% else %}
+      <span class="dash" title="{{ cell.miss_reason }}">—</span>
+    {% endif %}
+  </td>
+  <td class="text-end">
+    {% if cell.has_price %}
+      <span class="price">{{ cell.total_display }}</span>
+      <span class="note">за {{ cell.nights_label }}</span>
+    {% else %}
+      <span class="dash">—</span>
+    {% endif %}
+  </td>
+  <td class="text-end">
+    {% if cell.collected_at %}
+      <span class="note {% if cell.is_stale %}text-danger{% endif %}"
+            title="Собрано {{ cell.collected_at }}">{{ cell.collected_at|timesince }} назад</span>
+    {% else %}
+      <span class="dash" title="{{ cell.miss_reason }}">—</span>
+    {% endif %}
+  </td>
+  {% endwith %}
 </tr>
