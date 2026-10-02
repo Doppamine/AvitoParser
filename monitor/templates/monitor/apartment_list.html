@@ -30,12 +30,19 @@
       </tr>
     {% empty %}
       <tr>
-        <td colspan="4" class="text-muted">
-          Квартиры не заведены. Добавьте их в <a href="{% url 'admin:monitor_apartment_changelist' %}">админке</a>.
-        </td>
+        <td colspan="4" class="text-muted">Квартиры не заведены — заведите первую формой ниже.</td>
       </tr>
     {% endfor %}
   </tbody>
 </table>
 </div>
+
+<h2 class="h6 mt-4 mb-2">Новая квартира</h2>
+<form method="post" class="row g-2 align-items-start" style="max-width: 60rem">
+  {% csrf_token %}
+  {% include "monitor/_apartment_fields.html" with form=form %}
+  <div class="col-12 col-lg-auto align-self-end">
+    <button type="submit" class="btn btn-sm btn-primary">Завести квартиру</button>
+  </div>
+</form>
 {% endblock %}

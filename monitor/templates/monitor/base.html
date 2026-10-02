@@ -23,6 +23,16 @@
   </style>
 </head>
 <body class="p-3">
+{% if user.is_authenticated %}
+  <div class="d-flex justify-content-end align-items-baseline gap-2 mb-2 small text-muted">
+    <span>{{ user.get_username }}</span>
+    {# Выход в Django 5 — только POST: ссылкой его срабатывал бы любой чужой <img>. #}
+    <form method="post" action="{% url 'logout' %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">выйти</button>
+    </form>
+  </div>
+{% endif %}
 {% if messages %}
   <div class="mb-2">
     {% for message in messages %}

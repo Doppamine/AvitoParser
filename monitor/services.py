@@ -182,18 +182,22 @@ def horizon_dates(start=None, days=None):
     return [start + timedelta(days=offset) for offset in range(days)]
 
 
-def latest_prices(apartment, interval):
+def latest_prices(apartment, interval, guests=None):
     """Последняя известная цена по каждому конкуренту на этот интервал.
 
     «Последняя известная», а не «свежая»: ручного ввода в проекте нет, и если
     сегодняшний сбор не удался, показать нечего, кроме вчерашнего числа с меткой
     времени. Возраст данных возвращается вместе с ценой.
+
+    `guests` входит в ключ поиска наравне с датами: цена зависит от числа гостей,
+    и снимок на четверых в ячейку сравнения на двоих не попадает.
     """
+    guests = settings.COLLECT_GUESTS if guests is None else guests
     competitors = list(apartment.competitors.all())
 
     snapshots = (
         PriceSnapshot.objects.filter(
-            price_kind=PriceKind.DATED, check_in=interval.check_in
+            price_kind=PriceKind.DATED, check_in=interval.check_in, guests=guests
         )
         .filter(Q(apartment=apartment) | Q(competitor__in=competitors))
         .order_by('-collected_at')

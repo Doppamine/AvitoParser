@@ -1,5 +1,6 @@
 """Страница сравнения цен. Решения о ценах принимает человек: страница только показывает."""
 
+from django.conf import settings
 from django.contrib import messages
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import QueryDict
@@ -7,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from monitor.forms import CompetitorAddForm
+from monitor.forms import ApartmentForm, CompetitorAddForm
 from monitor.models import Apartment, Competitor, PriceKind, PriceSnapshot, SnapshotStatus
 from monitor.services import latest_prices, parse_interval, sort_rows
 
@@ -17,6 +18,22 @@ VIEW_PARAMS = ('from', 'to', 'sort', 'show_inactive')
 
 
 def apartment_list(request):
+    """Список квартир и заведение новой.
+
+    Форма обрабатывается здесь, а не отдельным адресом, как у конкурентов:
+    полей четыре, и при ошибке набранное должно остаться на экране. Отдельный
+    POST-адрес с возвратом через messages годится для одного поля, а тут
+    заставил бы заполнять всё заново.
+    """
+    form = ApartmentForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        apartment = form.save()
+        messages.success(
+            request,
+            f'Квартира «{apartment.title}» заведена. Добавьте её конкурентов.',
+        )
+        return redirect('apartment-detail', pk=apartment.pk)
+
     # Успешным считается сбор, давший цену на дату: только такие цены видит менеджер.
     # Одна витринная цена — не повод писать, что данные свежие.
     last_success = (
@@ -31,11 +48,24 @@ def apartment_list(request):
         ),
         last_success=Subquery(last_success),
     )
-    return render(request, 'monitor/apartment_list.html', {'apartments': apartments})
+    return render(
+        request, 'monitor/apartment_list.html', {'apartments': apartments, 'form': form}
+    )
 
 
 def apartment_detail(request, pk):
     apartment = get_object_or_404(Apartment, pk=pk)
+
+    # Правка полей квартиры идёт на тот же адрес: период и сортировка сидят
+    # в строке запроса, поэтому после сохранения менеджер остаётся ровно там,
+    # где была, а при ошибке видит свой набранный текст, а не старый из базы.
+    edit_form = ApartmentForm(instance=apartment)
+    if request.method == 'POST':
+        edit_form = ApartmentForm(request.POST, instance=apartment)
+        if edit_form.is_valid():
+            edit_form.save()
+            messages.success(request, 'Квартира сохранена.')
+            return redirect(request.get_full_path())
 
     interval, error = parse_interval(request.GET.get('from'), request.GET.get('to'))
     if error:
@@ -57,8 +87,12 @@ def apartment_detail(request, pk):
         'monitor/apartment_detail.html',
         {
             'apartment': apartment,
+            'edit_form': edit_form,
             'table': table,
             'interval': interval,
+            # Менеджер должна видеть, при какой вместимости сняты цены: они
+            # от неё зависят, а меняется она настройкой, не на странице.
+            'guests': settings.COLLECT_GUESTS,
             'rows': rows,
             'sort_by': sort_by,
             'show_inactive': show_inactive,
@@ -122,6 +156,16 @@ def competitor_retire(request, pk, competitor_pk):
 def competitor_restore(request, pk, competitor_pk):
     apartment = get_object_or_404(Apartment, pk=pk)
     competitor = get_object_or_404(Competitor, pk=competitor_pk, apartment=apartment)
+    # Пока конкурент лежал вне работы, его ссылка могла стать своим объявлением
+    # квартиры — форма карточки убранных из работы не считает занятыми. Вернуть
+    # его сюда значит поставить в таблицу строку, сравниваемую сама с собой.
+    if competitor.url == apartment.avito_url:
+        messages.error(
+            request,
+            f'{competitor} вернуть нельзя: эта ссылка теперь стоит своим '
+            'объявлением квартиры. Сравнивать её с самой собой не с чем.',
+        )
+        return redirect(_back_url(request, apartment))
     competitor.is_active = True
     competitor.save(update_fields=['is_active'])
     messages.success(request, f'{competitor} снова в работе.')

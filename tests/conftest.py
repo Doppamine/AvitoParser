@@ -4,6 +4,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
+from django.test import Client
 from django.utils import timezone
 
 from monitor.models import (
@@ -50,6 +51,7 @@ def make_snapshot():
         hours_ago=1,
         note='',
         source=Source.AVITO,
+        guests=2,
     ):
         key = 'competitor' if isinstance(owner, Competitor) else 'apartment'
         return PriceSnapshot.objects.create(
@@ -59,6 +61,7 @@ def make_snapshot():
             nights=nights,
             price_per_night=price,
             total_price=None if price is None or nights is None else price * nights,
+            guests=guests,
             collected_at=timezone.now() - timedelta(hours=hours_ago),
             source=source,
             status=status,
@@ -66,3 +69,26 @@ def make_snapshot():
         )
 
     return factory
+
+
+@pytest.fixture
+def manager(db, django_user_model):
+    """Пользователь интерфейса. Ролей и прав нет: вход один и открывает всё."""
+    return django_user_model.objects.create_user(username='manager', password='secret')
+
+
+@pytest.fixture
+def client(client, manager):
+    """Тесты страниц ходят под входом.
+
+    Замещает клиента pytest-django целиком: вход закрыт посредником на всё
+    приложение, и анонимный клиент отвечал бы переадресацией на каждой странице.
+    Сама стена проверяется отдельно, через `anonymous_client`.
+    """
+    client.force_login(manager)
+    return client
+
+
+@pytest.fixture
+def anonymous_client():
+    return Client()

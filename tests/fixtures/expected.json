@@ -1,0 +1,354 @@
+{
+  "_comment": "Ожидаемые значения проставляет человек, сверяя дамп со скриншотом. null означает «не заполнено» — такой дамп тест пропускает с явным сообщением, а не проходит молча. Поля _hint_* это подсказки парсера, тесты их не читают; расхождение подсказки со скриншотом — находка.",
+  "_how_to_fill": [
+    "title — заголовок объявления так, как он на скриншоте",
+    "listing_price — витринная цена «от N ₽ за сутки», числом без пробелов; если её на скриншоте нет, поставьте 0 и напишите почему в listing_price_note",
+    "min_nights — минимальный срок, если он где-то виден; иначе оставьте null",
+    "fees_included — true, если сервисный сбор площадки входит в сумму периода, false если нет, null если по скриншоту не определить",
+    "по каждому периоду карусели: check_in в виде 2026-08-26 (с годом), nights числом, total_price сумма за период, price_per_night ваше деление",
+    "requested_period — блок цены на запрошенный период: base_price до скидки, discount_label как написано на странице, total_price итог, price_per_night ваше деление итога на ночи",
+    "у дампов со статусом blocked заполнять нечего; у captcha_overlay — только title и listing_price, периодов там нет"
+  ],
+  "dumps": [
+    {
+      "file": "20260825-230710_p1_u0_browser.html",
+      "screenshot": "20260825-230710_p1_u0_full.png",
+      "url": "https://www.avito.ru/moskva/kvartiry/kvartira-studiya_v_apart-otele_24_m_1_krovat_7628611904",
+      "note": "объявление 7628611904, карусель «Цены по датам» есть",
+      "collected_on": "2026-08-25",
+      "expected": {
+        "status": "ok",
+          "_hint_title": "Квартира-студия в апарт-отеле, 24 м², 1 кровать",
+        "title": "Квартира-студия в апарт-отеле, 24 м², 1 кровать",
+        "_hint_listing_price": "3350",
+        "listing_price": "3350",
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": [
+          {
+            "_hint_label": "26—27 августа",
+            "_hint_total": "5670.00",
+            "check_in": "2026-08-26",
+            "nights": 1,
+            "total_price": "5670.00",
+            "price_per_night": "5670.00"
+          },
+          {
+            "_hint_label": "27—28 августа",
+            "_hint_total": "5130.00",
+            "check_in": "2026-08-27",
+            "nights": 1,
+            "total_price": "5130.00",
+            "price_per_night": "5130.00"
+          },
+          {
+            "_hint_label": "28—29 августа",
+            "_hint_total": "6210.00",
+            "check_in": "2026-08-28",
+            "nights": 1,
+            "total_price": "6210.00",
+            "price_per_night": "6210.00"
+          }
+        ]
+      }
+    },
+    {
+      "file": "20260825-230710_p1_u1_browser.html",
+      "screenshot": "20260825-230710_p1_u1_full.png",
+      "url": "https://www.avito.ru/moskva/kvartiry/kvartira-studiya_30_m_3_krovati_4727479076",
+      "note": "объявление 4727479076, карусель есть",
+      "collected_on": "2026-08-25",
+      "expected": {
+        "status": "ok",
+        "_hint_title": "Квартира-студия, 30 м², 3 кровати",
+        "title": "Квартира-студия, 30 м², 3 кровати",
+        "_hint_listing_price": "3800",
+        "listing_price": "3800",
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": [
+          {
+            "_hint_label": "28—29 августа",
+            "_hint_total": "5875.00",
+            "check_in": "2026-08-28",
+            "nights": 1,
+            "total_price": "5875.00",
+            "price_per_night": "5875.00"
+          },
+          {
+            "_hint_label": "29—30 августа",
+            "_hint_total": "6125.00",
+            "check_in": "2026-08-29",
+            "nights": 1,
+            "total_price": "6125.00",
+            "price_per_night": "6125.00"
+          },
+          {
+            "_hint_label": "31 авг—1 сент",
+            "_hint_total": "4125.00",
+            "check_in": "2026-08-31",
+            "nights": 1,
+            "total_price": "4125.00",
+            "price_per_night": "4125.00"
+          }
+        ]
+      }
+    },
+    {
+      "file": "20260825-230710_p1_u2_browser.html",
+      "screenshot": "20260825-230710_p1_u2_full.png",
+      "url": "https://www.avito.ru/moskva/kvartiry/kvartira-studiya_25_m_2_krovati_4875762986",
+      "note": "объявление 4875762986, карусель есть, два периода по две ночи",
+      "collected_on": "2026-08-25",
+      "expected": {
+        "status": "ok",
+        "_hint_title": "Квартира-студия, 25 м², 2 кровати",
+        "title": "Квартира-студия, 25 м², 2 кровати",
+        "_hint_listing_price": "4500",
+        "listing_price": "4500",
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": [
+          {
+            "_hint_label": "27—28 августа",
+            "_hint_total": "6716.00",
+            "check_in": "2026-08-27",
+            "nights": 1,
+            "total_price": "6716.00",
+            "price_per_night": "6716.00"
+          },
+          {
+            "_hint_label": "3—5 сентября",
+            "_hint_total": "11452.00",
+            "check_in": "2026-09-03",
+            "nights": 2,
+            "total_price": "11452.00",
+            "price_per_night": "5726.00"
+          },
+          {
+            "_hint_label": "4—6 сентября",
+            "_hint_total": "12628.00",
+            "check_in": "2026-09-04",
+            "nights": 2,
+            "total_price": "12628.00",
+            "price_per_night": "6314.00"
+          }
+        ]
+      }
+    },
+    {
+      "file": "20260825-230710_p1_u3_browser.html",
+      "screenshot": "20260825-230710_p1_u3_full.png",
+      "url": "https://www.avito.ru/moskva/kvartiry/kvartira-studiya_25_m_2_krovati_4431710759",
+      "note": "объявление 4431710759, проверка поверх загруженной страницы: витринная цена есть, карусели нет",
+      "collected_on": "2026-08-25",
+      "expected": {
+        "status": "captcha_overlay",
+        "_hint_title": "Квартира-студия, 25 м², 2 кровати",
+        "title": "Квартира-студия, 25 м², 2 кровати",
+        "_hint_listing_price": "3500",
+        "listing_price": "3500",
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": []
+      }
+    },
+    {
+      "file": "20260825-230710_p1_u4_browser.html",
+      "screenshot": "20260825-230710_p1_u4_full.png",
+      "url": "https://avito.ru/moskva/kvartiry/kvartira-studiya_19_m_1_krovat_7251781371",
+      "note": "объявление 7251781371, карусель есть, все периоды через месяц",
+      "collected_on": "2026-08-25",
+      "expected": {
+        "status": "ok",
+        "_hint_title": "Квартира-студия, 19 м², 1 кровать",
+        "title": "Квартира-студия, 19 м², 1 кровать",
+        "_hint_listing_price": "3300",
+        "listing_price": "3300",
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": [
+          {
+            "_hint_label": "26—27 сентября",
+            "_hint_total": "5480.00",
+            "check_in": "2026-09-26",
+            "nights": 1,
+            "total_price": "5480.00",
+            "price_per_night": "5480.00"
+          },
+          {
+            "_hint_label": "27—28 сентября",
+            "_hint_total": "4800.00",
+            "check_in": "2026-09-27",
+            "nights": 1,
+            "total_price": "4800.00",
+            "price_per_night": "4800.00"
+          },
+          {
+            "_hint_label": "28—29 сентября",
+            "_hint_total": "4530.00",
+            "check_in": "2026-09-28",
+            "nights": 1,
+            "total_price": "4530.00",
+            "price_per_night": "4530.00"
+          }
+        ]
+      }
+    },
+    {
+      "file": "20260825-230710_p1_u0_http.html",
+      "screenshot": null,
+      "url": "https://www.avito.ru/moskva/kvartiry/kvartira-studiya_v_apart-otele_24_m_1_krovat_7628611904",
+      "note": "обычный HTTP-запрос, 403: вместо страницы заглушка «Доступ ограничен»",
+      "collected_on": "2026-08-25",
+      "expected": {
+        "status": "blocked",
+        "_hint_title": "Доступ ограничен: проблема с IP",
+        "title": null,
+        "_hint_listing_price": null,
+        "listing_price": null,
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": []
+      }
+    },
+    {
+      "file": "20260825-230710_p1_u2_http.html",
+      "screenshot": null,
+      "url": "https://www.avito.ru/moskva/kvartiry/kvartira-studiya_25_m_2_krovati_4875762986",
+      "note": "то же, второй экземпляр отказа",
+      "collected_on": "2026-08-25",
+      "expected": {
+        "status": "blocked",
+        "_hint_title": "Доступ ограничен: проблема с IP",
+        "title": null,
+        "_hint_listing_price": null,
+        "listing_price": null,
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": []
+      }
+    },
+    {
+      "file": "7628611904_2026-09-20_2026-09-23_g2.html",
+      "screenshot": "7628611904_2026-09-20_2026-09-23_g2.png",
+      "url": "https://www.avito.ru/moskva/kvartiry/kvartira-studiya_v_apart-otele_24_m_1_krovat_7628611904",
+      "note": "снят вручную 29.08 из обычного Chrome: даты 20–23 сентября заданы адресом, на месте блок str-price-info с ценой на период. Единственная фикстура, где есть цена на запрошенный период",
+      "collected_on": "2026-08-29",
+      "requested_interval": {
+        "check_in": "2026-09-20",
+        "nights": 3
+      },
+      "expected": {
+        "status": "ok",
+        "_hint_title": "Квартира-студия в апарт-отеле, 24 м², 1 кровать",
+        "title": "Квартира-студия в апарт-отеле, 24 м², 1 кровать",
+        "_hint_listing_price": "3350",
+        "listing_price": "3350",
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": [
+          {
+            "_hint_label": "17—20 сентября",
+            "_hint_total": "13563.00",
+            "_hint_source": "nearest_dates:data-id",
+            "check_in": "2026-09-17",
+            "nights": 3,
+            "total_price": "13563.00",
+            "price_per_night": "4521.00"
+          },
+          {
+            "_hint_label": "18—21 сентября",
+            "_hint_total": "13077.00",
+            "_hint_source": "nearest_dates:data-id",
+            "check_in": "2026-09-18",
+            "nights": 3,
+            "total_price": "13077.00",
+            "price_per_night": "4359.00"
+          },
+          {
+            "_hint_label": "19—22 сентября",
+            "_hint_total": "12105.00",
+            "_hint_source": "nearest_dates:data-id",
+            "check_in": "2026-09-19",
+            "nights": 3,
+            "total_price": "12105.00",
+            "price_per_night": "4035.00"
+          },
+          {
+            "_hint_label": "20.09—23.09",
+            "_hint_total": "11421.00",
+            "_hint_source": "str-price-info",
+            "check_in": "2026-09-20",
+            "nights": 3,
+            "total_price": "11421.00",
+            "price_per_night": "3807.00"
+          },
+          {
+            "_hint_label": "21—24 сентября",
+            "_hint_total": "11907.00",
+            "_hint_source": "nearest_dates:data-id",
+            "check_in": "2026-09-21",
+            "nights": 3,
+            "total_price": "11907.00",
+            "price_per_night": "3969.00"
+          },
+          {
+            "_hint_label": "22—25 сентября",
+            "_hint_total": "12393.00",
+            "_hint_source": "nearest_dates:data-id",
+            "check_in": "2026-09-22",
+            "nights": 3,
+            "total_price": "12393.00",
+            "price_per_night": "4131.00"
+          },
+          {
+            "_hint_label": "23—26 сентября",
+            "_hint_total": "13365.00",
+            "_hint_source": "nearest_dates:data-id",
+            "check_in": "2026-09-23",
+            "nights": 3,
+            "total_price": "13365.00",
+            "price_per_night": "4455.00"
+          }
+        ],
+        "requested_period": {
+          "_hint_base_price": "12690.00",
+          "_hint_discount": "−10%",
+          "_hint_total": "11421.00",
+          "_hint_per_night": "3807.00",
+          "base_price": "12690.00",
+          "discount_label": "−10%",
+          "total_price": "11421.00",
+          "price_per_night": "3807.00"
+        }
+      }
+    },
+    {
+      "file": "20260825-230710_p1_u1_http_ck.html",
+      "screenshot": null,
+      "url": "https://www.avito.ru/moskva/kvartiry/kvartira-studiya_30_m_3_krovati_4727479076",
+      "note": "ключевая фикстура: страница пришла целиком, витринная цена есть, карусели нет. Парсер обязан вернуть отсутствие датированной цены, а не подставить витринную",
+      "collected_on": "2026-08-25",
+      "expected": {
+        "status": "no_dated_prices",
+        "_hint_title": "Квартира-студия, 30 м², 3 кровати",
+        "title": "Квартира-студия, 30 м², 3 кровати",
+        "_hint_listing_price": "3800",
+        "listing_price": "3800",
+        "listing_price_note": "",
+        "min_nights": null,
+        "fees_included": null,
+        "periods": []
+      }
+    }
+  ]
+}

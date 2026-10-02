@@ -1,0 +1,23 @@
+{# Поля своей квартиры. Один набор на заведение в списке и на правку на странице:
+   разъехавшиеся формы дают разные проверки в двух местах. #}
+<div class="col-12 col-sm-6 col-lg-3">
+  <label class="form-label mb-0 small text-muted" for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+  {{ form.title }}
+  {% for error in form.title.errors %}<span class="note text-danger">{{ error }}</span>{% endfor %}
+</div>
+<div class="col-12 col-sm-6 col-lg-3">
+  <label class="form-label mb-0 small text-muted" for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+  {{ form.address }}
+  {% for error in form.address.errors %}<span class="note text-danger">{{ error }}</span>{% endfor %}
+</div>
+<div class="col-4 col-sm-3 col-lg-1">
+  <label class="form-label mb-0 small text-muted" for="{{ form.min_nights.id_for_label }}">{{ form.min_nights.label }}</label>
+  {{ form.min_nights }}
+  {% for error in form.min_nights.errors %}<span class="note text-danger">{{ error }}</span>{% endfor %}
+</div>
+<div class="col-12 col-lg-4">
+  <label class="form-label mb-0 small text-muted" for="{{ form.avito_url.id_for_label }}">{{ form.avito_url.label }}</label>
+  {{ form.avito_url }}
+  <span class="note">{{ form.avito_url.help_text }}</span>
+  {% for error in form.avito_url.errors %}<span class="note text-danger">{{ error }}</span>{% endfor %}
+</div>

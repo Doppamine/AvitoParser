@@ -31,7 +31,23 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Показ идёт через временный туннель Cloudflare, и имя у туннеля каждый раз
+# новое. Поэтому в списке стоит весь домен, а не конкретный адрес: иначе
+# перезапуск туннеля посреди показа означал бы правку настроек.
+ALLOWED_HOSTS = os.environ.get(
+    'DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,.trycloudflare.com'
+).split(',')
+
+# Туннель отдаёт страницы по https с чужого имени, а Django сверяет заголовок
+# Origin каждого POST со своим списком. Без этой строки не проходит даже вход:
+# форма отправляется и возвращается отказом проверки CSRF.
+# Список выводится из ALLOWED_HOSTS, чтобы имя туннеля не пришлось держать
+# в двух местах и однажды поправить только в одном.
+CSRF_TRUSTED_ORIGINS = [
+    f'https://*{host}' if host.startswith('.') else f'https://{host}'
+    for host in ALLOWED_HOSTS
+    if host not in ('localhost', '127.0.0.1')
+]
 
 
 # Application definition
@@ -52,6 +68,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Закрывает вход целиком, а не постранично: инструмент внутренний, и
+    # страница, которую забыли закрыть декоратором, — это открытая страница.
+    # Формы входа исключены из проверки самим Django, включая вход в админку.
+    'django.contrib.auth.middleware.LoginRequiredMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -145,3 +165,31 @@ PRICE_HORIZON_DAYS = int(os.environ.get('PRICE_HORIZON_DAYS', '7'))
 
 # Снимок старше этого срока показывается на странице с возрастом данных.
 STALE_AFTER_HOURS = 12
+
+# Пауза между обращениями к площадке. Медленнее, чем 3–6 секунд из CLAUDE.md:
+# разведка фазы 0 упёрлась в отказ «слишком много запросов» примерно на 135-м
+# обращении, и темп — единственный рычаг, который правилами разрешён.
+COLLECT_PAUSE_SECONDS = (
+    float(os.environ.get('COLLECT_PAUSE_MIN', '15')),
+    float(os.environ.get('COLLECT_PAUSE_MAX', '30')),
+)
+
+# На сколько откладывается задание, когда площадка показала проверку.
+# Проходит её человек, поэтому срок измеряется рабочим днём, а не минутами.
+COLLECT_DEFER_HOURS = int(os.environ.get('COLLECT_DEFER_HOURS', '8'))
+
+# Число гостей, при котором собираются цены. Одинаковое для всех объявлений:
+# цена зависит от числа гостей, и снимки на двоих и на четверых несопоставимы —
+# та же ошибка, что сравнение периодов разной длины.
+COLLECT_GUESTS = int(os.environ.get('COLLECT_GUESTS', '2'))
+
+
+# Вход. Ролей и прав в проекте нет: пользователей двое, и оба видят всё.
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'apartment-list'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Менеджер заходит три раза в день с одной и той же машины. Месяц с продлением
+# при каждом обращении — чтобы вход не превратился в ежедневный обряд.
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
+SESSION_SAVE_EVERY_REQUEST = True

@@ -3,7 +3,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group, User
 
-from monitor.models import Apartment, Competitor, PriceSnapshot
+from monitor.models import Apartment, CollectTask, Competitor, PriceSnapshot
 
 admin.site.site_header = 'Цены на посуточную аренду'
 admin.site.site_title = 'Цены на посуточную аренду'
@@ -102,3 +102,25 @@ class PriceSnapshotAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(CollectTask)
+class CollectTaskAdmin(admin.ModelAdmin):
+    """Очередь сбора — разработчику, чтобы видеть отложенные задания.
+
+    «Отложено на восемь часов» — нормальное состояние: значит площадка показала
+    проверку и ждёт человека. Без этого экрана такое видно только в логах.
+    """
+
+    list_display = (
+        'created_at', 'owner', 'check_in', 'nights', 'state', 'attempts',
+        'deferred_until', 'finished_at',
+    )
+    list_filter = ('state',)
+    search_fields = ('competitor__title', 'competitor__url', 'apartment__title')
+    readonly_fields = ('created_at', 'started_at', 'finished_at', 'attempts', 'snapshot')
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='объект')
+    def owner(self, obj):
+        return obj.competitor or obj.apartment

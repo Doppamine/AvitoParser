@@ -128,11 +128,10 @@ def test_inactive_competitors_are_hidden_by_default(client, detail_url, apartmen
 
 
 def test_live_refresh_is_not_offered_yet(client, detail_url):
-    """Место под кнопку заложено, но нажать её нельзя: сбора ещё нет."""
+    """Кнопки живого обновления на странице нет: нажать её всё равно нечем."""
     body = client.get(detail_url).content.decode()
 
-    assert 'Обновить цены' in body
-    assert 'disabled' in body
+    assert 'Обновить цены' not in body
 
 
 def test_missing_apartment_gives_404(client, db):

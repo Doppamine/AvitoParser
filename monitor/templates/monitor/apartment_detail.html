@@ -12,6 +12,19 @@
   </div>
 </div>
 
+{# Свёрнуто: правят карточку раз в жизни, а смотрят на цены три раза в день.
+   С ошибками раскрывается само, иначе они остались бы невидимыми. #}
+<details class="mb-3"{% if edit_form.errors %} open{% endif %}>
+  <summary class="text-muted" style="cursor: pointer">Карточка квартиры</summary>
+  <form method="post" class="row g-2 align-items-start mt-1" style="max-width: 60rem">
+    {% csrf_token %}
+    {% include "monitor/_apartment_fields.html" with form=edit_form %}
+    <div class="col-12 col-lg-auto align-self-end">
+      <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+    </div>
+  </form>
+</details>
+
 <form method="get" class="row g-2 align-items-end mb-3">
   <div class="col-auto">
     <label class="form-label mb-0 small text-muted" for="from">Заезд</label>
@@ -29,13 +42,6 @@
     <button type="submit" class="btn btn-sm btn-primary">Показать</button>
   </div>
   <div class="col-auto text-muted">{{ interval.nights_label }}</div>
-  <div class="col-auto ms-auto">
-    {# Место под кнопку живого обновления. Она появится в фазе 3, вместе со сбором. #}
-    <button type="button" class="btn btn-sm btn-outline-secondary" disabled
-            title="Появится в фазе 3, когда будет сбор цен. Сейчас страница показывает то, что собрано раньше.">
-      Обновить цены
-    </button>
-  </div>
 </form>
 
 <form method="post" action="{% url 'competitor-add' apartment.pk %}" class="row g-2 mb-3">
@@ -101,6 +107,8 @@
   Подсвечены конкуренты, которые на этот период дешевле нас. Прочерк — цены на этот период нет;
   причина во всплывающей подсказке. Цена за две ночи не подставляется вместо цены за три:
   это разные числа.
+  Все цены сняты при размещении на&nbsp;{{ guests }}&nbsp;чел.: у площадки цена зависит
+  и от числа гостей, поэтому снимки на разную вместимость не смешиваются.
 </p>
 
 {% endblock %}

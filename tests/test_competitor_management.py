@@ -152,3 +152,40 @@ def test_only_known_view_params_come_back(client, apartment):
     assert target.startswith(reverse('apartment-detail', args=[apartment.pk]))
     assert 'evil.example' not in target
     assert 'next' not in target
+
+
+def test_the_own_listing_may_not_be_added_as_a_competitor(client, apartment):
+    """Строка, сравниваемая сама с собой, — не сравнение."""
+    apartment.avito_url = VALID_URL
+    apartment.save()
+
+    response = add(client, apartment, VALID_URL)
+
+    assert not Competitor.objects.exists()
+    assert 'собственное объявление' in ' '.join(messages_of(response))
+
+
+def test_the_own_listing_is_recognised_through_a_query_string(client, apartment):
+    apartment.avito_url = VALID_URL
+    apartment.save()
+
+    response = add(client, apartment, f'{VALID_URL}?checkIn=2026-09-20')
+
+    assert not Competitor.objects.exists()
+    assert 'собственное объявление' in ' '.join(messages_of(response))
+
+
+def test_a_competitor_that_became_the_own_listing_is_not_restored(client, apartment,
+                                                                  competitor):
+    """Пока конкурент лежал вне работы, его ссылка могла стать своим объявлением."""
+    client.post(reverse('competitor-retire', args=[apartment.pk, competitor.pk]))
+    apartment.avito_url = competitor.url
+    apartment.save()
+
+    response = client.post(
+        reverse('competitor-restore', args=[apartment.pk, competitor.pk]), follow=True
+    )
+
+    competitor.refresh_from_db()
+    assert not competitor.is_active
+    assert 'вернуть нельзя' in ' '.join(messages_of(response))

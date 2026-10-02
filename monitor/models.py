@@ -3,7 +3,7 @@
 from django.db import models
 from django.db.models import Q
 
-from monitor.validators import validate_avito_url
+from monitor.validators import normalize_avito_url, validate_avito_url
 
 
 class SnapshotIsImmutable(Exception):
@@ -24,6 +24,10 @@ class Apartment(models.Model):
     min_nights = models.PositiveSmallIntegerField('минимальный срок, ночей', default=2)
     is_active = models.BooleanField('в работе', default=True)
     created_at = models.DateTimeField('заведена', auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        self.avito_url = normalize_avito_url(self.avito_url)
+        super().save(*args, **kwargs)
 
     class Meta:
         # Админка подставляет verbose_name в «Выберите … для изменения» и «Добавить …»,
@@ -73,6 +77,13 @@ class Competitor(models.Model):
 
     def __str__(self):
         return self.title or self.url
+
+    def save(self, *args, **kwargs):
+        # Нормализация живёт в save(), а не только в форме: иначе ссылка,
+        # заведённая из админки или скриптом, обойдёт её стороной, и проверка
+        # дублей начнёт сравнивать нормализованное с ненормализованным.
+        self.url = normalize_avito_url(self.url)
+        super().save(*args, **kwargs)
 
 
 class PriceKind(models.TextChoices):
@@ -138,9 +149,15 @@ class PriceSnapshot(models.Model):
     total_price = models.DecimalField(
         'сумма за период', max_digits=10, decimal_places=2, null=True, blank=True
     )
-    # None = не выяснено. Входит ли сервисный сбор площадки в сумму — вопрос
-    # заказчику задан, ответа нет. Догадка здесь была бы хуже пустоты.
+    # None = не выяснено. Отдельной строкой сервисный сбор площадка не показывает
+    # (проверено вживую 29.08), поэтому по странице не определить, входит он
+    # в сумму или нет. Догадка здесь была бы хуже пустоты.
     fees_included = models.BooleanField('сервисный сбор включён', null=True, blank=True)
+
+    # Число гостей, при котором получена цена. Часть ключа сопоставимости наравне
+    # с датами и числом ночей: цена зависит от числа гостей, и снимки на двоих
+    # и на четверых сравнивать нельзя. Задаётся в адресе объявления.
+    guests = models.PositiveSmallIntegerField('гостей', default=2)
 
     collected_at = models.DateTimeField('собрано', db_index=True)
     source = models.CharField('источник', max_length=20, choices=Source.choices)
@@ -154,11 +171,11 @@ class PriceSnapshot(models.Model):
         ordering = ['-collected_at']
         indexes = [
             models.Index(
-                fields=['competitor', 'check_in', '-collected_at'],
+                fields=['competitor', 'check_in', 'nights', 'guests', '-collected_at'],
                 name='snapshot_competitor_idx',
             ),
             models.Index(
-                fields=['apartment', 'check_in', '-collected_at'],
+                fields=['apartment', 'check_in', 'nights', 'guests', '-collected_at'],
                 name='snapshot_apartment_idx',
             ),
         ]
@@ -212,3 +229,103 @@ class PriceSnapshot(models.Model):
 
     def delete(self, *args, **kwargs):
         raise SnapshotIsImmutable('Снимки цен не удаляются.')
+
+
+class TaskState(models.TextChoices):
+    """Состояние задания в очереди сбора."""
+
+    PENDING = 'pending', 'ждёт'
+    RUNNING = 'running', 'выполняется'
+    DONE = 'done', 'выполнено'
+    FAILED = 'failed', 'сбой'
+    # Площадка показала проверку. Ждём человека: «отложено на восемь часов» —
+    # нормальное состояние, поэтому очередь и живёт в базе, а не в памяти.
+    DEFERRED = 'deferred', 'отложено'
+
+
+class CollectTask(models.Model):
+    """Одно задание сбора: сходить по объявлению и записать снимок.
+
+    Очередь лежит в базе, а не в памяти процесса, по двум причинам. Первая:
+    наткнувшись на проверку, сбор останавливается на часы, и невыполненные
+    задания обязаны пережить перезапуск. Вторая: каждое выполненное задание
+    пишется сразу, поэтому прерывание на середине не теряет уже собранное.
+
+    В отличие от снимков, задания изменяемы: это очередь, а не история.
+    """
+
+    competitor = models.ForeignKey(
+        Competitor,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='collect_tasks',
+        verbose_name='конкурент',
+    )
+    apartment = models.ForeignKey(
+        Apartment,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='collect_tasks',
+        verbose_name='квартира',
+    )
+
+    # Пусто значит «запиши то, что площадка покажет сама». Задать даты можно
+    # не всегда: блок «Цены по датам» показывает даты по выбору площадки.
+    check_in = models.DateField('дата заезда', null=True, blank=True)
+    nights = models.PositiveSmallIntegerField('ночей', null=True, blank=True)
+    # Одинаковое для всех конкурентов в одном сборе — иначе цены несопоставимы.
+    guests = models.PositiveSmallIntegerField('гостей', default=2)
+
+    state = models.CharField(
+        'состояние', max_length=16, choices=TaskState.choices,
+        default=TaskState.PENDING, db_index=True,
+    )
+    attempts = models.PositiveSmallIntegerField('попыток', default=0)
+
+    created_at = models.DateTimeField('заведено', auto_now_add=True)
+    started_at = models.DateTimeField('начато', null=True, blank=True)
+    finished_at = models.DateTimeField('закончено', null=True, blank=True)
+    deferred_until = models.DateTimeField('отложено до', null=True, blank=True)
+
+    note = models.TextField('примечание', blank=True)
+    # PROTECT здесь не нужен: снимок живёт своей жизнью, задание — служебное.
+    snapshot = models.ForeignKey(
+        PriceSnapshot,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+        verbose_name='записанный снимок',
+    )
+
+    class Meta:
+        verbose_name = 'задание сбора'
+        verbose_name_plural = 'задания сбора'
+        ordering = ['created_at', 'pk']
+        indexes = [
+            models.Index(fields=['state', 'created_at'], name='task_state_idx'),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(competitor__isnull=False, apartment__isnull=True)
+                    | Q(competitor__isnull=True, apartment__isnull=False)
+                ),
+                name='task_exactly_one_owner',
+            ),
+        ]
+
+    def __str__(self):
+        owner = self.competitor or self.apartment
+        when = self.check_in.isoformat() if self.check_in else 'без дат'
+        return f'{owner} — {when} — {self.get_state_display()}'
+
+    @property
+    def url(self):
+        return self.competitor.url if self.competitor_id else self.apartment.avito_url
+
+    @property
+    def owner(self):
+        return self.competitor or self.apartment

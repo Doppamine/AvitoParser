@@ -294,3 +294,37 @@ def test_a_period_a_month_away_is_ordinary(apartment, competitor, make_snapshot)
     make_snapshot(competitor, far.check_in, nights=far.nights, price=Decimal('7000.00'))
 
     assert only_cell(apartment, far).price_per_night == Decimal('7000.00')
+
+
+# ------------------------------------------------------------------- гости
+
+
+def test_snapshot_for_other_guest_count_is_not_shown(apartment, competitor,
+                                                     make_snapshot, today, settings):
+    """Цена на четверых не попадает в ячейку сравнения на двоих.
+
+    Та же ошибка, что подстановка цены за другое число ночей, только тише:
+    у площадки цена от числа гостей зависит.
+    """
+    from monitor.services import Interval, latest_prices
+
+    settings.COLLECT_GUESTS = 2
+    interval = Interval(check_in=today, nights=2)
+    make_snapshot(competitor, today, nights=2, guests=4)
+
+    table = latest_prices(apartment, interval)
+    assert table.competitors[0].cell.has_price is False
+
+
+def test_snapshot_with_matching_guest_count_is_shown(apartment, competitor,
+                                                     make_snapshot, today, settings):
+    from decimal import Decimal
+
+    from monitor.services import Interval, latest_prices
+
+    settings.COLLECT_GUESTS = 2
+    interval = Interval(check_in=today, nights=2)
+    make_snapshot(competitor, today, nights=2, guests=2, price=Decimal('5000.00'))
+
+    table = latest_prices(apartment, interval)
+    assert table.competitors[0].cell.price_per_night == Decimal('5000.00')
